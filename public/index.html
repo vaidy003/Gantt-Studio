@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gantt Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <img class="brand-logo" src="./sdi-logo.png" alt="SDI logo" />
+          <h1>Timeline</h1>
+        </div>
+        <div class="topbar-actions">
+          <label class="zoom-slider-wrap" for="zoomSlider">
+            <span class="zoom-label">Zoom</span>
+            <input id="zoomSlider" class="zoom-slider" type="range" min="0" max="100" step="1" value="0" aria-label="Timeline zoom" />
+            <span id="zoomValue" class="zoom-value">12 mo</span>
+          </label>
+          <button id="addTaskButton" class="primary-button toolbar-button icon-only-button tooltip-button" type="button" aria-label="Add Task" data-tooltip="Add Task">
+            <span class="button-icon" aria-hidden="true">+</span>
+          </button>
+          <button id="importButton" class="ghost-button" type="button">Import CSV</button>
+          <input id="csvFileInput" class="hidden-file-input" type="file" accept=".csv,text/csv" />
+        </div>
+      </header>
+
+      <section class="board-shell">
+        <div class="board-header-spacer" aria-hidden="true"></div>
+        <div id="boardHeaderHost" class="board-header-host"></div>
+        <main class="board-card">
+          <div class="board-scroll">
+            <div id="ganttBoard" class="gantt-board"></div>
+          </div>
+        </main>
+      </section>
+    </div>
+
+    <dialog id="taskDialog" class="task-dialog">
+      <form id="taskForm" class="task-form" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p id="dialogEyebrow" class="eyebrow">Create Item</p>
+            <h2 id="dialogTitle">Add Task</h2>
+          </div>
+          <button id="closeDialogButton" class="icon-button" type="button">×</button>
+        </div>
+
+        <input id="editingTaskId" name="task_id" type="hidden" />
+
+        <label>
+          <span>Level</span>
+          <select id="levelSelect" name="level">
+            <option value="task">Task</option>
+            <option value="subtask">Sub Task</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Parent</span>
+          <select id="parentSelect" name="parent_id"></select>
+        </label>
+
+        <label>
+          <span>Title</span>
+          <input id="titleInput" name="title" type="text" required />
+        </label>
+
+        <label>
+          <span>Assignee Email</span>
+          <input id="assigneeInput" name="assignee_email" type="email" value="prasad@aeee.in" required />
+        </label>
+
+        <div class="two-col">
+          <label>
+            <span>Start Date</span>
+            <input id="startDateInput" name="start_date" type="date" />
+          </label>
+          <label>
+            <span>End Date</span>
+            <input id="endDateInput" name="end_date" type="date" />
+          </label>
+        </div>
+
+        <div class="dialog-actions">
+          <button id="deleteTaskButton" class="danger-button" type="button" hidden>Delete Task</button>
+          <button id="cancelDialogButton" class="ghost-button" type="button">Cancel</button>
+          <button id="saveTaskButton" class="primary-button" type="submit">Save Task</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="floatingTooltip" class="floating-tooltip" aria-hidden="true"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

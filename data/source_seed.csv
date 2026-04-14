@@ -1,0 +1,112 @@
+Task ID,SubTask ID,Sub Sub Task ID,Task Name,Assignee Email,Start Date,End Date
+1,,,Competition Milestones,,07/09/26,18/05/27
+,1.01,,Competition Guide Release,Jaydeep,07/09/26,07/09/26
+,1.02,,Early Bird Regstration Period,,07/09/26,13/11/26
+,1.03,,Normal Registration Period,,07/09/26,16/09/26
+,1.04,,Competition Start,,13/11/26,13/11/26
+,1.12,,D1 Submission Start,,12/01/27,15/01/27
+,1.13,,D1 Submission Deadline,,16/01/27,17/01/27
+,1.14,,SLM Completions,,,
+,1.22,,D2 Submission Start,,16/03/27,16/03/27
+,1.23,,D2 Submission Deadline,,17/03/27,17/03/27
+,1.24,,Finalist Announcement,,08/04/27,08/04/27
+,1.31,,D3 Submission Start,,11/05/27,14/05/27
+,1.32,,D3 Submission Deadline,,15/05/27,16/05/27
+,1.41,,FDP - 1,,01/12/26,04/12/26
+,1.42,,FDP - 2,,06/02/27,09/02/27
+,1.41,,SDI Finals,,18/06/27,20/06/27
+2,,,Management Tasks,,16/07/26,12/02/27
+,2.01,,Y8 Strategy Meet,prasad@aeee.in,10/02/27,12/02/27
+,2.02,,Finalise webinar experts,prasad@aeee.in,16/07/26,20/07/26
+,2.03,,Finalise webinar LOI and email to experts,prasad@aeee.in,30/10/26,03/11/26
+,2.04,,Team Name Change,,2026-11-14,2026-12-15
+,2.05,,Division Change,,2026-11-14,2026-12-15
+,2.06,,SDI Project Partner Request,,2026-12-01,2026-12-07
+,2.07,,SDI PP Assignment,,2026-12-08,2026-12-10
+,2.08,,D2 Send comments to teams,,22/03/27,22/03/27
+,2.09,,D3 Jury Orientation Call,,15/05/27,15/05/27
+,2.1,,D1 Reviewer Orientation Call,,16/01/27,16/01/27
+,2.11,,D2 Reviewer Orientation Call,,17/03/27,17/03/27
+,2.12,,Team composition finalisation,,2026-11-18,2026-11-18
+,2.13,,Finalise SDI EPP,,2026-07-15,2026-07-15
+,2.14,,Core team upskilling,,2026-06-30,2026-09-30
+,2.15,,Finalise D2 date,,2026-07-17,2026-07-17
+,2.16,,Finalise Multi Lingual SLMs Approach,,2026-03-05,2026-05-29
+,2.17,,Multi Lingual SLMs Execution,,2026-07-01,2026-09-30
+3,,,Webinars,,15/07/26,16/05/27
+,3.01,,Ask us Anything about SDI,prasad@aeee.in,15/07/26,16/07/26
+,3.02,,Ask us Anything about SDI,prasad@aeee.in,31/07/26,01/08/26
+,3.03,,Kickstart your SDI Journey and Connect with your Mentors,prasad@aeee.in,16/08/26,17/08/26
+,3.04,,Simulation Workshop 1: Predesign analysis,prasad@aeee.in,01/09/26,02/09/26
+,3.05,,Simulation Workshop 2: Concept stage analysis,prasad@aeee.in,17/09/26,18/09/26
+,3.06,,Product Challenge: Cracking Deliverable 1 + Market and User Research,prasad@aeee.in,03/10/26,04/10/26
+,3.07,,Building Challenge | Cracking Deliverable 1,prasad@aeee.in,19/10/26,20/10/26
+,3.08,,Innovation for Sustainability - Experiences from Atomberg,prasad@aeee.in,04/11/26,05/11/26
+,3.09,,Designing for Sustainability - Experiences from Transsolar,prasad@aeee.in,20/11/26,21/11/26
+,3.1,,Simulation Workshop 3: Design Development,prasad@aeee.in,06/12/26,07/12/26
+,3.11,,Product Challenge: Cracking Deliverable 2 + Ideation and Low-fidelity Prototyping,prasad@aeee.in,22/12/26,23/12/26
+,3.12,,Building Challenge | Cracking Deliverable 2,prasad@aeee.in,07/01/27,08/01/27
+,3.13,,Simulation Workshop 4: HVAC Systems,prasad@aeee.in,23/01/27,24/01/27
+,3.14,,Product Challenge: Cracking Deliverable 3 + Cooling Performance Testing,prasad@aeee.in,08/02/27,09/02/27
+,3.15,,Building Challenge | Cracking Deliverable 3,prasad@aeee.in,24/02/27,25/02/27
+,3.16,,Product Challenge: User Testing,prasad@aeee.in,12/03/27,13/03/27
+,3.17,,Simulation Workshop 5: Ask Us Anything about Simulations,prasad@aeee.in,28/03/27,29/03/27
+,3.18,,Crafting a Strong Value Proposition,prasad@aeee.in,13/04/27,14/04/27
+,3.19,,Making good presentations,prasad@aeee.in,29/04/27,30/04/27
+,3.2,,Ask us Anything about SDI Finals,prasad@aeee.in,15/05/27,16/05/27
+4,,,Comms Tasks,,17/08/26,20/06/27
+,4.02,,Annual report,prasad@aeee.in,24/08/26,24/08/26
+,4.03,,TRG on webiste,prasad@aeee.in,17/08/26,26/08/26
+,4.04,,FDP - 1 Report,prasad@aeee.in,10/10/26,19/10/26
+,4.05,,FDP - 2 Report,prasad@aeee.in,03/12/26,12/12/26
+,4.06,,IP+PP Logos on website,prasad@aeee.in,26/01/27,04/02/27
+,4.07,,Reviewers on website,prasad@aeee.in,21/03/27,30/03/27
+5,,,External Events,,01/12/26,20/06/27
+,5.11,,Gate exam,,01/02/27,08/02/27
+,,,FEED Conference (tentative),,30/01/27,31/01/27
+,,,,,,
+6,,,Team Work From Home,,05/01/26,26/11/26
+,6.01,,AT,prasad@aeee.in,05/01/26,11/01/26
+,6.02,,AMN,prasad@aeee.in,03/02/26,09/02/26
+,6.03,,AG,prasad@aeee.in,04/03/26,10/03/26
+,6.04,,MG,prasad@aeee.in,02/04/26,08/04/26
+,6.05,,PV,prasad@aeee.in,01/05/26,07/05/26
+,6.06,,PSH,prasad@aeee.in,30/05/26,05/06/26
+,6.07,,LKK,prasad@aeee.in,28/06/26,04/07/26
+,6.08,,GV,prasad@aeee.in,27/07/26,02/08/26
+,6.09,,RBS,prasad@aeee.in,25/08/26,31/08/26
+,6.1,,SS,prasad@aeee.in,23/09/26,29/09/26
+,6.11,,JD,prasad@aeee.in,22/10/26,28/10/26
+,6.12,,MN,prasad@aeee.in,20/11/26,26/11/26
+7,,,Team Days Off,,05/01/26,26/11/26
+,7.01,,Team Winter Break,,25/12/26,03/01/27
+,7.02,,Team Summer Break,,21/06/27,28/06/27
+,7.03,,AG,,,
+,7.04,,MG,,,
+,7.05,,PV,,,
+,7.06,,PSH,,,
+,7.07,,LKK,,,
+,7.08,,GV,,,
+,7.09,,RBS,,,
+,7.1,,SS,,,
+,7.11,,JD,,,
+,7.12,,MN,,,
+8,,,Public Holidays,,15/08/26,26/03/27
+,8.01,,Independance day,,15/08/26,15/08/26
+,8.02,,Raksha Bandan,,28/08/26,28/08/26
+,8.03,,Janmashthami,,04/09/26,04/09/26
+,8.04,,Ganesh Chaturthi,,14/09/26,18/09/26
+,8.05,,Onam,,16/08/26,25/08/26
+,8.06,,Gandhi Jayanti,,02/10/26,02/10/26
+,8.07,,Dusshera,,20/10/26,20/10/26
+,8.08,,Diwali,,08/11/26,10/11/26
+,8.09,,Karnataka Day,,02/11/26,02/11/26
+,8.1,,Christmas,,25/12/26,25/12/26
+,8.11,,New year,,01/01/27,01/01/27
+,8.12,,Good Friday,,26/03/27,26/03/27
+,8.13,,Holi,,22/03/27,22/03/27
+,8.14,,Maha Shivratri,,06/03/27,06/03/27
+,8.15,,Republic Day,,26/01/27,26/01/27
+,8.16,,Sankranti,,15/01/27,15/01/27
+,8.17,,Gate exam,,01/02/27,08/02/27
+,8.18,,Winter break,,25/12/26,03/01/27
