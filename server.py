@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
@@ -13,9 +14,11 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
 PUBLIC_DIR = ROOT / "public"
-DATA_DIR = ROOT / "data"
+DATA_DIR = Path(os.getenv("GANTT_DATA_DIR", str(ROOT / "data")))
 DB_PATH = DATA_DIR / "gantt.db"
-SEED_CSV_PATH = DATA_DIR / "source_seed.csv"
+SEED_CSV_PATH = ROOT / "data" / "source_seed.csv"
+
+
 def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -618,8 +621,10 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
 
 def main() -> None:
     setup_database()
-    server = ThreadingHTTPServer(("127.0.0.1", 8017), GanttRequestHandler)
-    print("Gantt Studio running at http://127.0.0.1:8017")
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8017"))
+    server = ThreadingHTTPServer((host, port), GanttRequestHandler)
+    print(f"Gantt Studio running at http://{host}:{port}")
     server.serve_forever()
 
 
