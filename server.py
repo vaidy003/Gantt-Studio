@@ -170,8 +170,42 @@ def import_csv_text(connection: sqlite3.Connection, csv_text: str) -> int:
     if not required_headers.issubset(headers):
         raise ValueError("CSV must include Task Name, Start Date, and End Date columns.")
 
+    rows = list(reader)
+    if not rows:
+        raise ValueError("CSV is empty.")
+
+    invalid_subtask_dates = []
+    top_level_count = 0
+    subtask_count = 0
+
+    for index, row in enumerate(rows, start=2):
+        task_id = (row.get("Task ID") or "").strip()
+        subtask_id = (row.get("SubTask ID") or "").strip()
+        title = (row.get("Task Name") or "").strip()
+        raw_start = (row.get("Start Date") or "").strip()
+        raw_end = (row.get("End Date") or "").strip()
+        parsed_start = normalize_date(raw_start)
+        parsed_end = normalize_date(raw_end)
+
+        if task_id:
+            top_level_count += 1
+        elif subtask_id:
+            subtask_count += 1
+            if title and raw_start and raw_end and (not parsed_start or not parsed_end):
+                invalid_subtask_dates.append((index, title, raw_start, raw_end))
+
+    if invalid_subtask_dates:
+        line_no, title, raw_start, raw_end = invalid_subtask_dates[0]
+        raise ValueError(
+            f'Could not parse dates for subtask "{title}" on CSV line {line_no}: '
+            f'"{raw_start}" / "{raw_end}". Use YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY.'
+        )
+
+    if top_level_count and subtask_count == 0:
+        raise ValueError("CSV imported only top-level tasks. Check the date format on subtasks.")
+
     connection.execute("DELETE FROM tasks")
-    seed_from_reader(connection, reader)
+    seed_from_reader(connection, rows)
     normalize_two_level_hierarchy(connection)
     refresh_all_parent_dates(connection)
     row_count = connection.execute("SELECT COUNT(*) AS count FROM tasks").fetchone()["count"]
@@ -187,7 +221,7 @@ def normalize_date(value: str | None) -> str | None:
     raw = value.strip()
     if not raw:
         return None
-    for fmt in ("%Y-%m-%d", "%d/%m/%y", "%d/%m/%Y"):
+    for fmt in ("%Y-%m-%d", "%d/%m/%y", "%d/%m/%Y", "%d-%m-%Y", "%d-%m-%y"):
         try:
             return datetime.strptime(raw, fmt).date().isoformat()
         except ValueError:
