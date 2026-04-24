@@ -31,6 +31,7 @@ const topbar = document.querySelector(".topbar");
 const zoomSlider = document.querySelector("#zoomSlider");
 const zoomValue = document.querySelector("#zoomValue");
 const addTaskButton = document.querySelector("#addTaskButton");
+const backupButton = document.querySelector("#backupButton");
 const importButton = document.querySelector("#importButton");
 const csvFileInput = document.querySelector("#csvFileInput");
 const dialog = document.querySelector("#taskDialog");
@@ -52,6 +53,7 @@ const endDateInput = document.querySelector("#endDateInput");
 
 zoomSlider.addEventListener("input", handleZoomInput);
 addTaskButton.addEventListener("click", () => openDialog());
+backupButton.addEventListener("click", downloadBackup);
 importButton.addEventListener("click", () => csvFileInput.click());
 csvFileInput.addEventListener("change", handleCsvImport);
 closeDialogButton.addEventListener("click", () => dialog.close());
@@ -470,6 +472,10 @@ async function handleDeleteFromDialog() {
   }
   dialog.close();
   await deleteSubtask(taskId);
+}
+
+function downloadBackup() {
+  window.location.href = "/api/backup";
 }
 
 function hydrateZoom() {

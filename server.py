@@ -677,6 +677,10 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
             self.send_json(payload)
             return
 
+        if parsed.path == "/api/backup":
+            self.send_backup()
+            return
+
         if parsed.path == "/health":
             self.send_json({"ok": True})
             return
@@ -685,6 +689,21 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
             self.path = "/index.html"
 
         super().do_GET()
+
+    def send_backup(self) -> None:
+        if not DB_PATH.exists():
+            self.send_json({"error": "Database file not found."}, status=HTTPStatus.NOT_FOUND)
+            return
+
+        timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+        filename = f"gantt-studio-backup-{timestamp}.db"
+        body = DB_PATH.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
