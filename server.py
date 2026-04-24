@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import hmac
 import json
 import os
 import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
+from http.cookies import SimpleCookie
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,10 +20,34 @@ PUBLIC_DIR = ROOT / "public"
 DATA_DIR = Path(os.getenv("GANTT_DATA_DIR", str(ROOT / "data")))
 DB_PATH = DATA_DIR / "gantt.db"
 SEED_CSV_PATH = ROOT / "data" / "source_seed.csv"
+APP_PASSWORD_ENV = "APP_PASSWORD"
+SESSION_SECRET_ENV = "APP_SESSION_SECRET"
+SESSION_COOKIE_NAME = "gantt_studio_session"
+SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 14
 
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def auth_enabled() -> bool:
+    return bool(os.getenv(APP_PASSWORD_ENV, "").strip())
+
+
+def configured_password() -> str:
+    return os.getenv(APP_PASSWORD_ENV, "").strip()
+
+
+def session_secret() -> bytes:
+    return (os.getenv(SESSION_SECRET_ENV) or configured_password()).encode("utf-8")
+
+
+def build_session_token() -> str:
+    return hmac.new(
+        session_secret(),
+        b"gantt-studio-authenticated-session",
+        hashlib.sha256,
+    ).hexdigest()
 
 
 def get_connection() -> sqlite3.Connection:
@@ -566,8 +593,84 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(PUBLIC_DIR), **kwargs)
 
+    def cookie_suffix(self) -> str:
+        if self.headers.get("X-Forwarded-Proto", "").lower() == "https":
+            return "; Secure"
+        return ""
+
+    def auth_cookie_header(self) -> str:
+        return (
+            f"{SESSION_COOKIE_NAME}={build_session_token()}; Path=/; HttpOnly; "
+            f"SameSite=Lax; Max-Age={SESSION_COOKIE_MAX_AGE}{self.cookie_suffix()}"
+        )
+
+    def cleared_auth_cookie_header(self) -> str:
+        return (
+            f"{SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; "
+            f"Max-Age=0{self.cookie_suffix()}"
+        )
+
+    def is_authenticated(self) -> bool:
+        if not auth_enabled():
+            return True
+
+        raw_cookie = self.headers.get("Cookie", "")
+        if not raw_cookie:
+            return False
+
+        cookie = SimpleCookie()
+        cookie.load(raw_cookie)
+        morsel = cookie.get(SESSION_COOKIE_NAME)
+        if morsel is None:
+            return False
+
+        return hmac.compare_digest(morsel.value, build_session_token())
+
+    def is_public_path(self, path: str) -> bool:
+        return path in {
+            "/health",
+            "/login",
+            "/login.html",
+            "/sdi-logo.png",
+            "/favicon.ico",
+        }
+
+    def ensure_authenticated(self, path: str) -> bool:
+        if not auth_enabled() or self.is_public_path(path) or path == "/api/login":
+            return True
+        if self.is_authenticated():
+            return True
+
+        if path.startswith("/api/"):
+            self.send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
+        else:
+            self.send_redirect("/login")
+        return False
+
+    def send_redirect(self, location: str, *, set_cookie: str | None = None) -> None:
+        self.send_response(HTTPStatus.SEE_OTHER)
+        self.send_header("Location", location)
+        if set_cookie:
+            self.send_header("Set-Cookie", set_cookie)
+        self.end_headers()
+
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/logout":
+            self.send_redirect("/login", set_cookie=self.cleared_auth_cookie_header())
+            return
+
+        if not self.ensure_authenticated(parsed.path):
+            return
+
+        if parsed.path == "/login":
+            if self.is_authenticated():
+                self.send_redirect("/")
+                return
+            self.path = "/login.html"
+            super().do_GET()
+            return
+
         if parsed.path == "/api/tasks":
             with closing(get_connection()) as connection:
                 payload = {"tasks": fetch_tasks(connection)}
@@ -585,6 +688,9 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if not self.ensure_authenticated(parsed.path):
+            return
+
         content_length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(content_length) if content_length else b"{}"
 
@@ -592,6 +698,23 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
             payload = json.loads(body.decode("utf-8"))
         except json.JSONDecodeError:
             self.send_error(HTTPStatus.BAD_REQUEST, "Invalid JSON payload")
+            return
+
+        if parsed.path == "/api/login":
+            supplied_password = str(payload.get("password", "")).strip()
+            if not auth_enabled():
+                self.send_json({"ok": True})
+                return
+            if not supplied_password or not hmac.compare_digest(supplied_password, configured_password()):
+                self.send_json(
+                    {"error": "Incorrect password. Please try again."},
+                    status=HTTPStatus.UNAUTHORIZED,
+                )
+                return
+            self.send_json(
+                {"ok": True},
+                extra_headers={"Set-Cookie": self.auth_cookie_header()},
+            )
             return
 
         try:
@@ -644,11 +767,18 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
 
         self.send_error(HTTPStatus.NOT_FOUND, "Endpoint not found")
 
-    def send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
+    def send_json(
+        self,
+        payload: dict,
+        status: HTTPStatus = HTTPStatus.OK,
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
         self.wfile.write(body)
 
