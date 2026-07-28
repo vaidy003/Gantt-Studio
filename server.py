@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import hmac
+import io
 import json
 import os
 import sqlite3
@@ -286,6 +287,65 @@ def fetch_tasks(connection: sqlite3.Connection) -> list[dict]:
         return built
 
     return build(None)
+
+
+def format_export_date(value: str | None) -> str:
+    if not value:
+        return ""
+    return datetime.strptime(value, "%Y-%m-%d").strftime("%d-%m-%Y")
+
+
+def export_tasks_csv(connection: sqlite3.Connection) -> str:
+    tree = fetch_tasks(connection)
+    fieldnames = [
+        "Task ID",
+        "SubTask ID",
+        "Sub Sub Task ID",
+        "Task Name",
+        "Assignee Email",
+        "Start Date",
+        "End Date",
+    ]
+
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames, lineterminator="\r\n")
+    writer.writeheader()
+
+    for task_index, task in enumerate(tree, start=1):
+        task_id = (task.get("source_task_id") or "").strip() or str(task_index)
+        task_start = task.get("manual_start_date") or task.get("start_date") or ""
+        task_end = task.get("manual_end_date") or task.get("end_date") or ""
+        writer.writerow(
+            {
+                "Task ID": task_id,
+                "SubTask ID": "",
+                "Sub Sub Task ID": "",
+                "Task Name": task["title"],
+                "Assignee Email": task["assignee_email"],
+                "Start Date": format_export_date(task_start),
+                "End Date": format_export_date(task_end),
+            }
+        )
+
+        for subtask_index, subtask in enumerate(task.get("children", []), start=1):
+            source_subtask_id = (subtask.get("source_subtask_id") or "").strip()
+            generated_subtask_id = f"{task_id}.{subtask_index:02d}"
+            subtask_id = source_subtask_id or generated_subtask_id
+            subtask_start = subtask.get("manual_start_date") or subtask.get("start_date") or ""
+            subtask_end = subtask.get("manual_end_date") or subtask.get("end_date") or ""
+            writer.writerow(
+                {
+                    "Task ID": "",
+                    "SubTask ID": subtask_id,
+                    "Sub Sub Task ID": "",
+                    "Task Name": subtask["title"],
+                    "Assignee Email": subtask["assignee_email"],
+                    "Start Date": format_export_date(subtask_start),
+                    "End Date": format_export_date(subtask_end),
+                }
+            )
+
+    return buffer.getvalue()
 
 
 def reset_to_seed(connection: sqlite3.Connection) -> None:
@@ -677,8 +737,8 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
             self.send_json(payload)
             return
 
-        if parsed.path == "/api/backup":
-            self.send_backup()
+        if parsed.path == "/api/export-csv":
+            self.send_csv_export()
             return
 
         if parsed.path == "/health":
@@ -690,16 +750,13 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
 
         super().do_GET()
 
-    def send_backup(self) -> None:
-        if not DB_PATH.exists():
-            self.send_json({"error": "Database file not found."}, status=HTTPStatus.NOT_FOUND)
-            return
-
+    def send_csv_export(self) -> None:
+        with closing(get_connection()) as connection:
+            body = export_tasks_csv(connection).encode("utf-8-sig")
         timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-        filename = f"gantt-studio-backup-{timestamp}.db"
-        body = DB_PATH.read_bytes()
+        filename = f"gantt-studio-export-{timestamp}.csv"
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header("Content-Type", "text/csv; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
         self.end_headers()

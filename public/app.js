@@ -169,21 +169,13 @@ function syncBoardHeaderScroll() {
 }
 
 function updateChromeLayout() {
-  const headerGap = 6;
-  const topbarHeight = Math.ceil(topbar.getBoundingClientRect().height || 0);
   const shellRect = boardShell.getBoundingClientRect();
-  const topbarRect = topbar.getBoundingClientRect();
   const rootStyles = getComputedStyle(document.documentElement);
   const timelineHeaderHeight = Math.round(
     parseFloat(rootStyles.getPropertyValue("--timeline-header-height")) || 96,
   );
-
-  document.documentElement.style.setProperty("--app-header-height", `${topbarHeight}px`);
   document.documentElement.style.setProperty("--board-shell-left", `${Math.round(shellRect.left)}px`);
   document.documentElement.style.setProperty("--board-shell-width", `${Math.round(shellRect.width)}px`);
-
-  appShell.style.paddingTop = `${topbarHeight + headerGap}px`;
-  boardHeaderHost.style.top = `${Math.round(topbarRect.bottom + headerGap)}px`;
   boardHeaderHost.style.left = `${Math.round(shellRect.left)}px`;
   boardHeaderHost.style.width = `${Math.round(shellRect.width)}px`;
   boardHeaderSpacer.style.height = `${Math.max(0, timelineHeaderHeight - 1)}px`;
@@ -475,7 +467,7 @@ async function handleDeleteFromDialog() {
 }
 
 function downloadBackup() {
-  window.location.href = "/api/backup";
+  window.location.href = "/api/export-csv";
 }
 
 function hydrateZoom() {
