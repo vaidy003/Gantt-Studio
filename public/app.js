@@ -205,6 +205,7 @@ function renderRow(row, index, timelineStart, totalDays) {
     ? (((daysBetween(new Date(row.start_date), new Date(row.end_date)) + 1) / totalDays) * 100).toFixed(3)
     : "0";
   const dateLabel = hasDates ? `${formatDate(row.start_date)} - ${formatDate(row.end_date)}` : "No dates set";
+  const rowTooltip = hasDates ? `${row.title} • ${dateLabel}` : row.title;
   const canEdit = row.depth === 1;
   const trackContent =
     row.depth === 0 && hasChildren
@@ -214,7 +215,7 @@ function renderRow(row, index, timelineStart, totalDays) {
       : `
         <div
           class="task-bar"
-          data-tooltip="${escapeHtml(dateLabel)}"
+          data-tooltip="${escapeHtml(rowTooltip)}"
           tabindex="0"
           style="left:${left}%; width:${width}%; background:${color};"
         ></div>
@@ -236,7 +237,7 @@ function renderRow(row, index, timelineStart, totalDays) {
               </button>`
             : ""
         }
-        <div class="task-title-wrap" data-tooltip="${escapeHtml(dateLabel)}" tabindex="0">
+        <div class="task-title-wrap" data-tooltip="${escapeHtml(rowTooltip)}" tabindex="0">
           <div class="task-title">${escapeHtml(row.title)}</div>
         </div>
         ${
@@ -267,7 +268,7 @@ function renderSummaryBar(row, color, timelineStart, totalDays, dateLabel) {
     .map((child) => {
       const childLeft = percentFromDate(child.start_date, timelineStart, totalDays);
       const childWidth = Math.max(percentFromRange(child.start_date, child.end_date, totalDays), 0.9);
-      const childLabel = `${formatDate(child.start_date)} - ${formatDate(child.end_date)}`;
+      const childLabel = `${child.title} • ${formatDate(child.start_date)} - ${formatDate(child.end_date)}`;
       return `
         <div
           class="summary-segment"
