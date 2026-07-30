@@ -28,7 +28,7 @@
           <button id="addTaskButton" class="primary-button toolbar-button icon-only-button tooltip-button" type="button" aria-label="Add Task" data-tooltip="Add Task">
             <span class="button-icon" aria-hidden="true">+</span>
           </button>
-          <button id="backupButton" class="ghost-button" type="button">Download CSV</button>
+          <button id="backupButton" class="ghost-button" type="button">Export CSV</button>
           <button id="importButton" class="ghost-button" type="button">Import CSV</button>
           <input id="csvFileInput" class="hidden-file-input" type="file" accept=".csv,text/csv" />
         </div>
@@ -49,7 +49,6 @@
       <form id="taskForm" class="task-form" method="dialog">
         <div class="dialog-header">
           <div>
-            <p id="dialogEyebrow" class="eyebrow">Create Item</p>
             <h2 id="dialogTitle">Add Task</h2>
           </div>
           <button id="closeDialogButton" class="icon-button" type="button">×</button>
@@ -75,10 +74,7 @@
           <input id="titleInput" name="title" type="text" required />
         </label>
 
-        <label>
-          <span>Assignee Email</span>
-          <input id="assigneeInput" name="assignee_email" type="email" value="prasad@aeee.in" required />
-        </label>
+        <input id="assigneeInput" class="hidden-file-input" name="assignee_email" type="email" value="prasad@aeee.in" required />
 
         <div class="two-col">
           <label>

@@ -3,6 +3,8 @@ const state = {
   collapsed: new Set(),
   zoomValue: 0,
   hasLoaded: false,
+  draggedSubtaskId: null,
+  dragParentId: null,
 };
 
 const LEFT_COLUMN_WIDTH = 340;
@@ -40,7 +42,6 @@ const closeDialogButton = document.querySelector("#closeDialogButton");
 const cancelDialogButton = document.querySelector("#cancelDialogButton");
 const deleteTaskButton = document.querySelector("#deleteTaskButton");
 const saveTaskButton = document.querySelector("#saveTaskButton");
-const dialogEyebrow = document.querySelector("#dialogEyebrow");
 const dialogTitle = document.querySelector("#dialogTitle");
 const floatingTooltip = document.querySelector("#floatingTooltip");
 const editingTaskIdInput = document.querySelector("#editingTaskId");
@@ -158,6 +159,8 @@ function renderBoard() {
     });
   });
 
+  bindSubtaskDragAndDrop();
+
 }
 
 function syncBoardHeaderScroll() {
@@ -169,13 +172,21 @@ function syncBoardHeaderScroll() {
 }
 
 function updateChromeLayout() {
+  const headerGap = 6;
+  const topbarHeight = Math.ceil(topbar.getBoundingClientRect().height || 0);
   const shellRect = boardShell.getBoundingClientRect();
+  const topbarRect = topbar.getBoundingClientRect();
   const rootStyles = getComputedStyle(document.documentElement);
   const timelineHeaderHeight = Math.round(
     parseFloat(rootStyles.getPropertyValue("--timeline-header-height")) || 96,
   );
+
+  document.documentElement.style.setProperty("--app-header-height", `${topbarHeight}px`);
   document.documentElement.style.setProperty("--board-shell-left", `${Math.round(shellRect.left)}px`);
   document.documentElement.style.setProperty("--board-shell-width", `${Math.round(shellRect.width)}px`);
+
+  appShell.style.paddingTop = `${topbarHeight + headerGap}px`;
+  boardHeaderHost.style.top = `${Math.round(topbarRect.bottom + headerGap)}px`;
   boardHeaderHost.style.left = `${Math.round(shellRect.left)}px`;
   boardHeaderHost.style.width = `${Math.round(shellRect.width)}px`;
   boardHeaderSpacer.style.height = `${Math.max(0, timelineHeaderHeight - 1)}px`;
@@ -186,6 +197,7 @@ function renderRow(row, index, timelineStart, totalDays) {
   const hasChildren = row.children.length > 0;
   const isCollapsed = state.collapsed.has(row.id);
   const hasDates = Boolean(row.start_date && row.end_date);
+  const isDraggableSubtask = row.depth === 1 && row.parent_id != null;
   const left = hasDates
     ? ((daysBetween(timelineStart, new Date(row.start_date)) / totalDays) * 100).toFixed(3)
     : "0";
@@ -202,20 +214,27 @@ function renderRow(row, index, timelineStart, totalDays) {
       : `
         <div
           class="task-bar"
-          data-tooltip="${escapeHtml(`${row.assignee_email} • ${dateLabel}`)}"
+          data-tooltip="${escapeHtml(dateLabel)}"
           tabindex="0"
           style="left:${left}%; width:${width}%; background:${color};"
         ></div>
       `;
 
   return `
-    <div class="task-row depth-${Math.min(row.depth, 2)}">
+    <div class="task-row depth-${Math.min(row.depth, 2)}${isDraggableSubtask ? " is-draggable-subtask" : ""}" data-task-id="${row.id}" data-parent-id="${row.parent_id ?? ""}">
       <div class="task-side depth-${Math.min(row.depth, 2)}">
         ${new Array(row.depth).fill('<div class="task-indent"></div>').join("")}
         ${
           hasChildren
             ? `<button class="toggle-button" data-toggle-id="${row.id}" type="button">${isCollapsed ? "+" : "−"}</button>`
             : '<div class="toggle-spacer"></div>'
+        }
+        ${
+          isDraggableSubtask
+            ? `<button class="drag-handle" data-drag-handle-id="${row.id}" data-parent-id="${row.parent_id}" type="button" draggable="true" aria-label="Reorder sub task" title="Drag to reorder sub task">
+                <span></span><span></span><span></span>
+              </button>`
+            : ""
         }
         <div class="task-title-wrap" data-tooltip="${escapeHtml(dateLabel)}" tabindex="0">
           <div class="task-title">${escapeHtml(row.title)}</div>
@@ -248,7 +267,7 @@ function renderSummaryBar(row, color, timelineStart, totalDays, dateLabel) {
     .map((child) => {
       const childLeft = percentFromDate(child.start_date, timelineStart, totalDays);
       const childWidth = Math.max(percentFromRange(child.start_date, child.end_date, totalDays), 0.9);
-      const childLabel = `${child.title} • ${formatDate(child.start_date)} - ${formatDate(child.end_date)}`;
+      const childLabel = `${formatDate(child.start_date)} - ${formatDate(child.end_date)}`;
       return `
         <div
           class="summary-segment"
@@ -323,7 +342,6 @@ function openDialog(task = null) {
   form.reset();
   assigneeInput.value = "prasad@aeee.in";
   editingTaskIdInput.value = task ? String(task.id) : "";
-  dialogEyebrow.textContent = task ? "Update Item" : "Create Item";
   dialogTitle.textContent = task ? "Edit Task" : "Add Task";
   saveTaskButton.textContent = task ? "Save Changes" : "Save Task";
 
@@ -464,6 +482,101 @@ async function handleDeleteFromDialog() {
   }
   dialog.close();
   await deleteSubtask(taskId);
+}
+
+function bindSubtaskDragAndDrop() {
+  board.querySelectorAll("[data-drag-handle-id]").forEach((handle) => {
+    handle.addEventListener("dragstart", handleSubtaskDragStart);
+    handle.addEventListener("dragend", handleSubtaskDragEnd);
+  });
+
+  board.querySelectorAll(".task-row.is-draggable-subtask").forEach((row) => {
+    row.addEventListener("dragover", handleSubtaskDragOver);
+    row.addEventListener("drop", handleSubtaskDrop);
+    row.addEventListener("dragleave", handleSubtaskDragLeave);
+  });
+}
+
+function handleSubtaskDragStart(event) {
+  const handle = event.currentTarget;
+  state.draggedSubtaskId = Number(handle.dataset.dragHandleId);
+  state.dragParentId = Number(handle.dataset.parentId);
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", String(state.draggedSubtaskId));
+  requestAnimationFrame(() => {
+    handle.closest(".task-row")?.classList.add("is-dragging");
+  });
+}
+
+function handleSubtaskDragEnd(event) {
+  state.draggedSubtaskId = null;
+  state.dragParentId = null;
+  board.querySelectorAll(".task-row.is-draggable-subtask").forEach((row) => {
+    row.classList.remove("drag-over-before", "drag-over-after", "is-dragging");
+  });
+}
+
+function handleSubtaskDragOver(event) {
+  if (!state.draggedSubtaskId) {
+    return;
+  }
+
+  const row = event.currentTarget;
+  const rowTaskId = Number(row.dataset.taskId);
+  const rowParentId = Number(row.dataset.parentId);
+  if (!rowTaskId || rowTaskId === state.draggedSubtaskId || rowParentId !== state.dragParentId) {
+    return;
+  }
+
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
+  const rect = row.getBoundingClientRect();
+  const position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+  row.classList.toggle("drag-over-before", position === "before");
+  row.classList.toggle("drag-over-after", position === "after");
+}
+
+function handleSubtaskDragLeave(event) {
+  const row = event.currentTarget;
+  const related = event.relatedTarget;
+  if (related && row.contains(related)) {
+    return;
+  }
+  row.classList.remove("drag-over-before", "drag-over-after");
+}
+
+async function handleSubtaskDrop(event) {
+  const row = event.currentTarget;
+  row.classList.remove("drag-over-before", "drag-over-after");
+
+  if (!state.draggedSubtaskId) {
+    return;
+  }
+
+  const targetId = Number(row.dataset.taskId);
+  const targetParentId = Number(row.dataset.parentId);
+  if (!targetId || targetId === state.draggedSubtaskId || targetParentId !== state.dragParentId) {
+    return;
+  }
+
+  event.preventDefault();
+  const rect = row.getBoundingClientRect();
+  const position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+  await reorderSubtask(state.draggedSubtaskId, targetId, position);
+}
+
+async function reorderSubtask(taskId, targetId, position) {
+  const response = await fetch(`/api/tasks/${taskId}/reorder`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target_id: targetId, position }),
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    window.alert(result.error || "Could not reorder sub task.");
+    return;
+  }
+  await loadTasks();
 }
 
 function downloadBackup() {

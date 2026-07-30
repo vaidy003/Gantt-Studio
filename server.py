@@ -592,6 +592,46 @@ def move_task(connection: sqlite3.Connection, task_id: int, direction: str) -> N
     connection.commit()
 
 
+def reorder_subtask(
+    connection: sqlite3.Connection,
+    task_id: int,
+    target_id: int,
+    position: str,
+) -> None:
+    if position not in {"before", "after"}:
+        raise ValueError("Invalid reorder position.")
+
+    task = get_task(connection, task_id)
+    target = get_task(connection, target_id)
+
+    if task["parent_id"] is None or target["parent_id"] is None:
+        raise ValueError("Only subtasks can be reordered.")
+    if task["parent_id"] != target["parent_id"]:
+        raise ValueError("Subtasks can only be reordered within the same task.")
+    if task_id == target_id:
+        return
+
+    parent_id = task["parent_id"]
+    siblings = [dict(row) for row in sibling_rows(connection, parent_id)]
+    current_index = next(i for i, row in enumerate(siblings) if row["id"] == task_id)
+    target_index = next(i for i, row in enumerate(siblings) if row["id"] == target_id)
+
+    moving = siblings.pop(current_index)
+    if current_index < target_index:
+        target_index -= 1
+
+    insert_index = target_index if position == "before" else target_index + 1
+    siblings.insert(insert_index, moving)
+
+    timestamp = utc_now()
+    for index, sibling in enumerate(siblings, start=1):
+        connection.execute(
+            "UPDATE tasks SET order_index = ?, updated_at = ? WHERE id = ?",
+            (index, timestamp, sibling["id"]),
+        )
+    connection.commit()
+
+
 def demote_task(connection: sqlite3.Connection, task_id: int) -> None:
     task = get_task(connection, task_id)
     old_parent_id = task["parent_id"]
@@ -825,6 +865,17 @@ class GanttRequestHandler(SimpleHTTPRequestHandler):
                 if parsed.path.endswith("/move"):
                     task_id = int(parsed.path.split("/")[-2])
                     move_task(connection, task_id, payload.get("direction", ""))
+                    self.send_json({"ok": True})
+                    return
+
+                if parsed.path.endswith("/reorder"):
+                    task_id = int(parsed.path.split("/")[-2])
+                    reorder_subtask(
+                        connection,
+                        task_id,
+                        int(payload.get("target_id", 0)),
+                        str(payload.get("position", "")),
+                    )
                     self.send_json({"ok": True})
                     return
 

@@ -441,6 +441,20 @@ body {
   padding-bottom: 4px;
 }
 
+.task-row.is-draggable-subtask.is-dragging {
+  opacity: 0.5;
+}
+
+.task-row.is-draggable-subtask.drag-over-before .task-side,
+.task-row.is-draggable-subtask.drag-over-before .task-track {
+  box-shadow: inset 0 2px 0 rgba(125, 211, 159, 0.95);
+}
+
+.task-row.is-draggable-subtask.drag-over-after .task-side,
+.task-row.is-draggable-subtask.drag-over-after .task-track {
+  box-shadow: inset 0 -2px 0 rgba(125, 211, 159, 0.95);
+}
+
 .task-side:hover,
 .task-side:focus-within {
   z-index: 50;
@@ -480,6 +494,39 @@ body {
 .toggle-spacer {
   width: 24px;
   height: 24px;
+}
+
+.drag-handle {
+  width: 18px;
+  height: 24px;
+  flex: 0 0 18px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(242, 244, 247, 0.45);
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle span {
+  width: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.drag-handle:hover,
+.drag-handle:focus-visible {
+  color: rgba(242, 244, 247, 0.82);
+  outline: none;
 }
 
 .task-title-wrap {
@@ -632,6 +679,7 @@ body {
 
 .dialog-header h2 {
   margin: 6px 0 0;
+  color: var(--text);
 }
 
 .task-form label {
